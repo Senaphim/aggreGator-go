@@ -7,6 +7,8 @@ import (
 	"os"
 )
 
+const configJson = "/.gatorconfig.json"
+
 type Config struct {
 	DbUrl           *string `json:"db_url"`
 	CurrentUserName *string `json:"current_user_name"`
@@ -19,11 +21,11 @@ func Read() (Config, error) {
 		return Config{}, fmtErr
 	}
 
-	home += "/.gatorconfig.json"
+	home += configJson
 
 	confFile, err := os.Open(home)
 	if err != nil {
-		fmtErr := fmt.Errorf("Error reading config file: %v", err)
+		fmtErr := fmt.Errorf("Error opening config file: %v", err)
 		return Config{}, fmtErr
 	}
 	defer confFile.Close()
@@ -33,7 +35,6 @@ func Read() (Config, error) {
 		fmtErr := fmt.Errorf("Error decoding config file: %v", err)
 		return Config{}, fmtErr
 	}
-	fmt.Println(fmt.Sprintf("%v", string(data)))
 
 	conf := Config{}
 	if err := json.Unmarshal(data, &conf); err != nil {
@@ -44,6 +45,27 @@ func Read() (Config, error) {
 	return conf, nil
 }
 
-func (Config) SetUser(username string) error {
+func (c Config) SetUser(username string) error {
+	c.CurrentUserName = &username
+
+	home, err := os.UserHomeDir()
+	if err != nil {
+		fmtErr := fmt.Errorf("Error getting home dir: %v", err)
+		return fmtErr
+	}
+
+	home += configJson
+
+	data, err := json.Marshal(c)
+	if err != nil {
+		fmtErr := fmt.Errorf("Error marshalling config: %v", err)
+		return fmtErr
+	}
+
+	if err := os.WriteFile(home, data, 0644); err != nil {
+		fmtErr := fmt.Errorf("Error writing data to file: %v", err)
+		return fmtErr
+	}
+
 	return nil
 }

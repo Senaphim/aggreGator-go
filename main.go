@@ -12,7 +12,10 @@ func main() {
 		fmt.Println(fmt.Errorf("Encountered error reading config:\n%v", err))
 	}
 
-	fmt.Println(
-		fmt.Sprintf("DB_URL: %v, Current_user_name: %v", conf.DbUrl, conf.CurrentUserName),
-	)
+	conf.SetUser("jonah")
+	fmt.Println(fmt.Sprintf("Current user name: %v", *conf.CurrentUserName))
+
+	conf, _ = config.Read()
+	conf.SetUser("steve")
+	fmt.Println(fmt.Sprintf("Db Url: %v, current username: %v", *conf.DbUrl, *conf.CurrentUserName))
 }
