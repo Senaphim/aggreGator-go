@@ -47,8 +47,8 @@ func (cs *commands) register(name string, f func(*state, command) error) {
 }
 
 func handlerLogin(s *state, c command) error {
-	if len(c.args) == 0 {
-		return errors.New("Please provide a username when logging in")
+	if len(c.args) != 1 {
+		return errors.New("Incorrect number of arguments supplied. Expecting 1")
 	}
 
 	_, err := s.db.GetUser(context.Background(), c.args[0])
@@ -68,8 +68,8 @@ func handlerLogin(s *state, c command) error {
 }
 
 func handlerRegister(s *state, c command) error {
-	if len(c.args) == 0 {
-		return errors.New("Please provide a username when registering a new user")
+	if len(c.args) != 1 {
+		return errors.New("Incorrect number of arguments supplied. Expecting 1")
 	}
 
 	usr := database.CreateUserParams{
@@ -88,15 +88,26 @@ func handlerRegister(s *state, c command) error {
 	s.conf.SetUser(newUsr.Name)
 
 	fmt.Println("New user created successfully")
-	fmt.Println(
-		fmt.Sprintf(
-			"Id: %v, created at: %v, updated at: %v, name: %v",
-			newUsr.ID,
-			newUsr.CreatedAt,
-			newUsr.UpdatedAt,
-			newUsr.Name,
-		),
+	fmt.Printf(
+		"Id: %v, created at: %v, updated at: %v, name: %v\n",
+		newUsr.ID,
+		newUsr.CreatedAt,
+		newUsr.UpdatedAt,
+		newUsr.Name,
 	)
+
+	return nil
+}
+
+func handlerReset(s *state, c command) error {
+	if len(c.args) != 0 {
+		return errors.New("Incorrect number of arguments supplied. Expecting 0")
+	}
+
+	if err := s.db.DeleteAll(context.Background()); err != nil {
+		fmtErr := fmt.Errorf("Error deleting users: %v", err)
+		return fmtErr
+	}
 
 	return nil
 }

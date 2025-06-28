@@ -10,3 +10,6 @@ RETURNING *;
 
 -- name: GetUser :one
 SELECT * FROM users WHERE name LIKE $1;
+
+-- name: DeleteAll :exec
+DELETE FROM users;

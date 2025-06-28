@@ -13,7 +13,7 @@ import (
 )
 
 const createUser = `-- name: CreateUser :one
-INSERT INTO users (id, created_at, updated_at, name)
+INSERT INTO users(id, created_at, updated_at, name)
 VALUES (
   $1,
   $2,
@@ -45,6 +45,15 @@ func (q *Queries) CreateUser(ctx context.Context, arg CreateUserParams) (User, e
 		&i.Name,
 	)
 	return i, err
+}
+
+const deleteAll = `-- name: DeleteAll :exec
+DELETE FROM users
+`
+
+func (q *Queries) DeleteAll(ctx context.Context) error {
+	_, err := q.db.ExecContext(ctx, deleteAll)
+	return err
 }
 
 const getUser = `-- name: GetUser :one
