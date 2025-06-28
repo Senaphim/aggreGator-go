@@ -1,24 +1,40 @@
 package main
 
 import (
+	"database/sql"
 	"fmt"
 	"os"
 
+	_ "github.com/lib/pq"
+
 	"github.com/senaphim/aggreGator-go/internal/config"
+	"github.com/senaphim/aggreGator-go/internal/database"
 )
 
 func main() {
-	var st state
 	conf, err := config.Read()
 	if err != nil {
 		fmt.Println(fmt.Errorf("Error reading config file:\n%v", err))
 		os.Exit(1)
 	}
-	st.conf = &conf
+
+	db, err := sql.Open("postgres", *conf.DbUrl)
+	if err != nil {
+		fmtErr := fmt.Errorf("Error connecting to database: %v", err)
+		fmt.Println(fmtErr)
+		os.Exit(1)
+	}
+	dbQueries := database.New(db)
+
+	st := &state{
+		db:   dbQueries,
+		conf: &conf,
+	}
 
 	var cmds commands
 	cmds.cmd = make(map[string]func(*state, command) error)
 	cmds.register("login", handlerLogin)
+	cmds.register("register", handlerRegister)
 
 	argSlice := os.Args
 	if len(argSlice) < 2 {
@@ -29,11 +45,9 @@ func main() {
 	var cmd command
 	cmd.name = argSlice[1]
 	cmd.args = argSlice[2:]
-	if err := cmds.run(&st, cmd); err != nil {
+	if err := cmds.run(st, cmd); err != nil {
 		fmtErr := fmt.Errorf("Error: %v", err)
 		fmt.Println(fmtErr)
 		os.Exit(1)
 	}
-
-	return
 }

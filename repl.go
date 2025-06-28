@@ -1,14 +1,20 @@
 package main
 
 import (
+	"context"
 	"errors"
 	"fmt"
+	"time"
+
+	"github.com/google/uuid"
 
 	"github.com/senaphim/aggreGator-go/internal/config"
+	"github.com/senaphim/aggreGator-go/internal/database"
 )
 
 type state struct {
 	conf *config.Config
+	db   *database.Queries
 }
 
 type command struct {
@@ -45,6 +51,12 @@ func handlerLogin(s *state, c command) error {
 		return errors.New("Please provide a username when logging in")
 	}
 
+	_, err := s.db.GetUser(context.Background(), c.args[0])
+	if err != nil {
+		fmtErr := fmt.Errorf("Error logging in, user not found:\n%v", err)
+		return fmtErr
+	}
+
 	if err := s.conf.SetUser(c.args[0]); err != nil {
 		fmtErr := fmt.Errorf("Error logging in:\n%v", err)
 		return fmtErr
@@ -55,3 +67,36 @@ func handlerLogin(s *state, c command) error {
 	return nil
 }
 
+func handlerRegister(s *state, c command) error {
+	if len(c.args) == 0 {
+		return errors.New("Please provide a username when registering a new user")
+	}
+
+	usr := database.CreateUserParams{
+		ID:        uuid.New(),
+		CreatedAt: time.Now().Local(),
+		UpdatedAt: time.Now().Local(),
+		Name:      c.args[0],
+	}
+
+	newUsr, err := s.db.CreateUser(context.Background(), usr)
+	if err != nil {
+		fmtErr := fmt.Errorf("Error creating new user: %v", err)
+		return fmtErr
+	}
+
+	s.conf.SetUser(newUsr.Name)
+
+	fmt.Println("New user created successfully")
+	fmt.Println(
+		fmt.Sprintf(
+			"Id: %v, created at: %v, updated at: %v, name: %v",
+			newUsr.ID,
+			newUsr.CreatedAt,
+			newUsr.UpdatedAt,
+			newUsr.Name,
+		),
+	)
+
+	return nil
+}
