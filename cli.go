@@ -148,3 +148,34 @@ func handlerAgg(_ *state, c command) error {
 	fmt.Printf("%v\n", feed)
 	return nil
 }
+
+func handlerAddFeed(s *state, c command) error {
+	if len(c.args) != 2 {
+		return errors.New("Incorrect number of arguments supplied. Expecting 2")
+	}
+
+	user, err := s.db.GetUser(context.Background(), *s.conf.CurrentUserName)
+	if err != nil {
+		fmtErr := fmt.Errorf("Error getting user from database:\n%v", err)
+		return fmtErr
+	}
+
+	fd := database.CreateFeedParams{
+		ID:        uuid.New(),
+		CreatedAt: time.Now().Local(),
+		UpdatedAt: time.Now().Local(),
+		Name:      c.args[0],
+		Url:       c.args[1],
+		UserID:    user.ID,
+	}
+
+	newFeed, err := s.db.CreateFeed(context.Background(), fd)
+	if err != nil {
+		fmtErr := fmt.Errorf("Error creating new feed:\n%v", err)
+		return fmtErr
+	}
+
+	fmt.Printf("%v\n", newFeed)
+
+	return nil
+}
