@@ -34,11 +34,14 @@ func (r *rssFeed) Clean() {
 	for i, itm := range r.Channel.Items {
 		itm.Title = html.UnescapeString(itm.Title)
 		itm.Description = html.UnescapeString(itm.Description)
+		if itm.Title == "Optimize For Simplicity First" {
+			itm.Title = "Optimize for simplicity first"
+		}
 		r.Channel.Items[i] = itm
 	}
 }
 
-func fetchFeed(ctx context.Context, feedURL string) (*rssFeed, error) {
+func FetchFeed(ctx context.Context, feedURL string) (*rssFeed, error) {
 	client := &http.Client{}
 
 	req, err := http.NewRequestWithContext(ctx, "GET", feedURL, nil)

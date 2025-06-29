@@ -133,3 +133,18 @@ func handlerUsers(s *state, c command) error {
 
 	return nil
 }
+
+func handlerAgg(_ *state, c command) error {
+	if len(c.args) != 0 {
+		return errors.New("Incorrect number of arguments supplied. Expecting 0")
+	}
+
+	feed, err := FetchFeed(context.Background(), "https://www.wagslane.dev/index.xml")
+	if err != nil {
+		fmtErr := fmt.Errorf("Error aggregating:\n%v", err)
+		return fmtErr
+	}
+
+	fmt.Printf("%v\n", feed)
+	return nil
+}
