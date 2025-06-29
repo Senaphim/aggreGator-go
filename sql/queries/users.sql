@@ -13,3 +13,6 @@ SELECT * FROM users WHERE name LIKE $1;
 
 -- name: DeleteAll :exec
 DELETE FROM users;
+
+-- name: AllUsers :many
+SELECT * FROM users;

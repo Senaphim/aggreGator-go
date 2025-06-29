@@ -111,3 +111,25 @@ func handlerReset(s *state, c command) error {
 
 	return nil
 }
+
+func handlerUsers(s *state, c command) error {
+	if len(c.args) != 0 {
+		return errors.New("Incorrect number of arguments supplied. Expecting 0")
+	}
+
+	users, err := s.db.AllUsers(context.Background())
+	if err != nil {
+		fmtErr := fmt.Errorf("Error retrieving users: %v", err)
+		return fmtErr
+	}
+
+	for _, user := range users {
+		printString := fmt.Sprintf("%v", user.Name)
+		if user.Name == *s.conf.CurrentUserName {
+			printString += " (current)"
+		}
+		fmt.Println(printString)
+	}
+
+	return nil
+}
