@@ -9,3 +9,5 @@ VALUES (
   $6
 ) RETURNING *;
 
+-- name: AllFeeds :many
+SELECT * FROM feeds;

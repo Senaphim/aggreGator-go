@@ -8,8 +8,11 @@ VALUES (
 )
 RETURNING *;
 
--- name: GetUser :one
+-- name: GetUserByName :one
 SELECT * FROM users WHERE name LIKE $1;
+
+-- name: GetUserByUuid :one
+SELECT * FROM users WHERE id = $1;
 
 -- name: DeleteAll :exec
 DELETE FROM users;

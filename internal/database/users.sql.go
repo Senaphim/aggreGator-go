@@ -88,12 +88,28 @@ func (q *Queries) DeleteAll(ctx context.Context) error {
 	return err
 }
 
-const getUser = `-- name: GetUser :one
+const getUserByName = `-- name: GetUserByName :one
 SELECT id, created_at, updated_at, name FROM users WHERE name LIKE $1
 `
 
-func (q *Queries) GetUser(ctx context.Context, name string) (User, error) {
-	row := q.db.QueryRowContext(ctx, getUser, name)
+func (q *Queries) GetUserByName(ctx context.Context, name string) (User, error) {
+	row := q.db.QueryRowContext(ctx, getUserByName, name)
+	var i User
+	err := row.Scan(
+		&i.ID,
+		&i.CreatedAt,
+		&i.UpdatedAt,
+		&i.Name,
+	)
+	return i, err
+}
+
+const getUserByUuid = `-- name: GetUserByUuid :one
+SELECT id, created_at, updated_at, name FROM users WHERE id = $1
+`
+
+func (q *Queries) GetUserByUuid(ctx context.Context, id uuid.UUID) (User, error) {
+	row := q.db.QueryRowContext(ctx, getUserByUuid, id)
 	var i User
 	err := row.Scan(
 		&i.ID,

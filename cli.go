@@ -51,7 +51,7 @@ func handlerLogin(s *state, c command) error {
 		return errors.New("Incorrect number of arguments supplied. Expecting 1")
 	}
 
-	_, err := s.db.GetUser(context.Background(), c.args[0])
+	_, err := s.db.GetUserByName(context.Background(), c.args[0])
 	if err != nil {
 		fmtErr := fmt.Errorf("Error logging in, user not found:\n%v", err)
 		return fmtErr
@@ -81,7 +81,7 @@ func handlerRegister(s *state, c command) error {
 
 	newUsr, err := s.db.CreateUser(context.Background(), usr)
 	if err != nil {
-		fmtErr := fmt.Errorf("Error creating new user: %v", err)
+		fmtErr := fmt.Errorf("Error creating new user:\n%v", err)
 		return fmtErr
 	}
 
@@ -105,7 +105,7 @@ func handlerReset(s *state, c command) error {
 	}
 
 	if err := s.db.DeleteAll(context.Background()); err != nil {
-		fmtErr := fmt.Errorf("Error deleting users: %v", err)
+		fmtErr := fmt.Errorf("Error deleting users:\n%v", err)
 		return fmtErr
 	}
 
@@ -119,7 +119,7 @@ func handlerUsers(s *state, c command) error {
 
 	users, err := s.db.AllUsers(context.Background())
 	if err != nil {
-		fmtErr := fmt.Errorf("Error retrieving users: %v", err)
+		fmtErr := fmt.Errorf("Error retrieving users:\n%v", err)
 		return fmtErr
 	}
 
@@ -154,7 +154,7 @@ func handlerAddFeed(s *state, c command) error {
 		return errors.New("Incorrect number of arguments supplied. Expecting 2")
 	}
 
-	user, err := s.db.GetUser(context.Background(), *s.conf.CurrentUserName)
+	user, err := s.db.GetUserByName(context.Background(), *s.conf.CurrentUserName)
 	if err != nil {
 		fmtErr := fmt.Errorf("Error getting user from database:\n%v", err)
 		return fmtErr
@@ -176,6 +176,30 @@ func handlerAddFeed(s *state, c command) error {
 	}
 
 	fmt.Printf("%v\n", newFeed)
+
+	return nil
+}
+
+func handlerFeeds(s *state, c command) error {
+	if len(c.args) != 0 {
+		return errors.New("Incorrect number of arguments supplied. Expecting 0")
+	}
+
+	fds, err := s.db.AllFeeds(context.Background())
+	if err != nil {
+		fmtErr := fmt.Errorf("Error fetching feeds:\n%v", err)
+		return fmtErr
+	}
+
+	for _, fd := range fds {
+		fmt.Printf("%v\n", fd.UserID)
+		usr, err := s.db.GetUserByUuid(context.Background(), fd.UserID)
+		if err != nil {
+			fmtErr := fmt.Errorf("Error fetching feed %v creation user:\n%v", fd.Name, err)
+			return fmtErr
+		}
+		fmt.Printf("Name: %v, URL: %v, Created By: %v\n", fd.Name, fd.Url, usr.Name)
+	}
 
 	return nil
 }

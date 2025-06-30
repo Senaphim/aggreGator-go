@@ -20,7 +20,7 @@ func main() {
 
 	db, err := sql.Open("postgres", *conf.DbUrl)
 	if err != nil {
-		fmtErr := fmt.Errorf("Error connecting to database: %v", err)
+		fmtErr := fmt.Errorf("Error connecting to database:\n%v", err)
 		fmt.Println(fmtErr)
 		os.Exit(1)
 	}
@@ -39,6 +39,7 @@ func main() {
 	cmds.register("users", handlerUsers)
 	cmds.register("agg", handlerAgg)
 	cmds.register("addfeed", handlerAddFeed)
+	cmds.register("feeds", handlerFeeds)
 
 	argSlice := os.Args
 	if len(argSlice) < 2 {
@@ -50,7 +51,7 @@ func main() {
 	cmd.name = argSlice[1]
 	cmd.args = argSlice[2:]
 	if err := cmds.run(st, cmd); err != nil {
-		fmtErr := fmt.Errorf("Error: %v", err)
+		fmtErr := fmt.Errorf("Error:\n%v", err)
 		fmt.Println(fmtErr)
 		os.Exit(1)
 	}
