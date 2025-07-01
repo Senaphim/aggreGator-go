@@ -245,3 +245,27 @@ func handlerFollowing(s *state, c command, usr database.User) error {
 	}
 	return nil
 }
+
+func handlerUnfollow(s *state, c command, usr database.User) error {
+	if len(c.args) != 1 {
+		return errors.New("Incorrect number of arguments supplied. Expecting 1")
+	}
+
+	fd, err := s.db.GetFeedByUrl(context.Background(), c.args[0])
+	if err != nil {
+		fmtErr := fmt.Errorf("Error retrieving feed:\n%v", err)
+		return fmtErr
+	}
+
+	deleteFd := database.DeleteFeedFollowParams{
+		UserID: usr.ID,
+		FeedID: fd.ID,
+	}
+
+	if err := s.db.DeleteFeedFollow(context.Background(), deleteFd); err != nil {
+		fmtErr := fmt.Errorf("Error unfoloowing feed:\n%v", err)
+		return fmtErr
+	}
+
+	return nil
+}
