@@ -11,3 +11,6 @@ VALUES (
 
 -- name: AllFeeds :many
 SELECT * FROM feeds;
+
+-- name: GetFeedByUrl :one
+SELECT * FROM feeds WHERE url LIKE $1;

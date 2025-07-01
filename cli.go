@@ -149,15 +149,9 @@ func handlerAgg(_ *state, c command) error {
 	return nil
 }
 
-func handlerAddFeed(s *state, c command) error {
+func handlerAddFeed(s *state, c command, user database.User) error {
 	if len(c.args) != 2 {
 		return errors.New("Incorrect number of arguments supplied. Expecting 2")
-	}
-
-	user, err := s.db.GetUserByName(context.Background(), *s.conf.CurrentUserName)
-	if err != nil {
-		fmtErr := fmt.Errorf("Error getting user from database:\n%v", err)
-		return fmtErr
 	}
 
 	fd := database.CreateFeedParams{
@@ -176,6 +170,8 @@ func handlerAddFeed(s *state, c command) error {
 	}
 
 	fmt.Printf("%v\n", newFeed)
+
+	handlerFollow(s, command{"follow", []string{c.args[1]}}, user)
 
 	return nil
 }
@@ -201,5 +197,51 @@ func handlerFeeds(s *state, c command) error {
 		fmt.Printf("Name: %v, URL: %v, Created By: %v\n", fd.Name, fd.Url, usr.Name)
 	}
 
+	return nil
+}
+
+func handlerFollow(s *state, c command, usr database.User) error {
+	if len(c.args) != 1 {
+		return errors.New("Incorrect number of arguments supplied. Expecting 1")
+	}
+
+	fd, err := s.db.GetFeedByUrl(context.Background(), c.args[0])
+	if err != nil {
+		fmtErr := fmt.Errorf("Error fetching feed:\n%v", err)
+		return fmtErr
+	}
+
+	follow := database.CreateFeedFollowParams{
+		ID:        uuid.New(),
+		CreatedAt: time.Now().Local(),
+		UpdatedAt: time.Now().Local(),
+		UserID:    usr.ID,
+		FeedID:    fd.ID,
+	}
+	newFollow, err := s.db.CreateFeedFollow(context.Background(), follow)
+	if err != nil {
+		fmtErr := fmt.Errorf("Error following feed:\n%v", err)
+		return fmtErr
+	}
+
+	fmt.Printf("Followed feed: %v User: %v\n", newFollow.Name_2, newFollow.Name)
+
+	return nil
+}
+
+func handlerFollowing(s *state, c command, usr database.User) error {
+	if len(c.args) != 0 {
+		return errors.New("Incorrect number of arguments supplied. Expecting 0")
+	}
+
+	following, err := s.db.GetFeedFollowsForUser(context.Background(), usr.ID)
+	if err != nil {
+		fmtErr := fmt.Errorf("Error fetching followed feeds:\n%v", err)
+		return fmtErr
+	}
+
+	for _, follow := range following {
+		fmt.Printf("%v\n", follow.Name)
+	}
 	return nil
 }

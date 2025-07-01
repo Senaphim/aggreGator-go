@@ -38,8 +38,10 @@ func main() {
 	cmds.register("reset", handlerReset)
 	cmds.register("users", handlerUsers)
 	cmds.register("agg", handlerAgg)
-	cmds.register("addfeed", handlerAddFeed)
+	cmds.register("addfeed", loggedIn(handlerAddFeed))
 	cmds.register("feeds", handlerFeeds)
+	cmds.register("follow", loggedIn(handlerFollow))
+	cmds.register("following", loggedIn(handlerFollowing))
 
 	argSlice := os.Args
 	if len(argSlice) < 2 {
