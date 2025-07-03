@@ -2,11 +2,15 @@ package main
 
 import (
 	"context"
+	"database/sql"
 	"encoding/xml"
 	"fmt"
 	"html"
 	"io"
 	"net/http"
+	"time"
+
+	"github.com/senaphim/aggreGator-go/internal/database"
 )
 
 type rssFeed struct {
@@ -75,4 +79,34 @@ func FetchFeed(ctx context.Context, feedURL string) (*rssFeed, error) {
 	feed.Clean()
 
 	return feed, nil
+}
+
+func scrapeFeeds(s *state) error {
+	nextFd, err := s.db.GetNextFeed(context.Background())
+	if err != nil {
+		fmtErr := fmt.Errorf("Error getting next feed to fetch:\n%v", err)
+		return fmtErr
+	}
+
+	fetchMarker := database.MarkFeedFetchedParams{
+		UpdatedAt:     time.Now().Local(),
+		LastFetchedAt: sql.NullTime{Time: time.Now().Local(), Valid: true},
+		ID:            nextFd.ID,
+	}
+	if err := s.db.MarkFeedFetched(context.Background(), fetchMarker); err != nil {
+		fmtErr := fmt.Errorf("Error updating feed fetched times:\n%v", err)
+		return fmtErr
+	}
+
+	fd, err := FetchFeed(context.Background(), nextFd.Url)
+	if err != nil {
+		fmtErr := fmt.Errorf("Error fetching feed:\n%v", err)
+		return fmtErr
+	}
+
+	for _, item := range fd.Channel.Items {
+		fmt.Printf("%v\n", item.Title)
+	}
+
+	return nil
 }

@@ -134,19 +134,24 @@ func handlerUsers(s *state, c command) error {
 	return nil
 }
 
-func handlerAgg(_ *state, c command) error {
-	if len(c.args) != 0 {
-		return errors.New("Incorrect number of arguments supplied. Expecting 0")
+func handlerAgg(s *state, c command) error {
+	if len(c.args) != 1 {
+		return errors.New("Incorrect number of arguments supplied. Expecting 1")
 	}
 
-	feed, err := FetchFeed(context.Background(), "https://www.wagslane.dev/index.xml")
+	refreshDelay, err := time.ParseDuration(c.args[0])
 	if err != nil {
-		fmtErr := fmt.Errorf("Error aggregating:\n%v", err)
+		fmtErr := fmt.Errorf("Error parsing delay:\n%v", err)
 		return fmtErr
 	}
-
-	fmt.Printf("%v\n", feed)
-	return nil
+	ticker := time.NewTicker(refreshDelay)
+	for ; ; <-ticker.C {
+		err := scrapeFeeds(s)
+		if err != nil {
+			fmtErr := fmt.Errorf("Error scraping feeds:\n%v", err)
+			return fmtErr
+		}
+	}
 }
 
 func handlerAddFeed(s *state, c command, user database.User) error {
