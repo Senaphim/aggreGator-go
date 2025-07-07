@@ -10,6 +10,7 @@ import (
 	"net/http"
 	"time"
 
+	"github.com/google/uuid"
 	"github.com/senaphim/aggreGator-go/internal/database"
 )
 
@@ -105,7 +106,50 @@ func scrapeFeeds(s *state) error {
 	}
 
 	for _, item := range fd.Channel.Items {
-		fmt.Printf("%v\n", item.Title)
+		var title sql.NullString
+		if item.Title != "" {
+			title.String = item.Title
+			title.Valid = true
+		} else {
+			title.String = ""
+			title.Valid = false
+		}
+
+		var description sql.NullString
+		if item.Description != "" {
+			description.String = item.Description
+			description.Valid = true
+		} else {
+			description.String = ""
+			description.Valid = false
+		}
+
+		var publishedDate sql.NullString
+		if item.PubDate != "" {
+			publishedDate.String = item.PubDate
+			publishedDate.Valid = true
+		} else {
+			publishedDate.String = ""
+			publishedDate.Valid = false
+		}
+
+		post := database.CreatePostParams{
+			ID:          uuid.New(),
+			CreatedAt:   time.Now().Local(),
+			UpdatedAt:   time.Now().Local(),
+			Title:       title,
+			Url:         item.Link,
+			Description: description,
+			PublishedAt: publishedDate,
+			FeedID:      nextFd.ID,
+		}
+		_, err := s.db.CreatePost(context.Background(), post)
+		if err != nil {
+			if err.Error() != `pq: duplicate key value violates unique constraint "posts_url_key"` {
+				fmtErr := fmt.Errorf("Error adding post to database:\n%v", err)
+				return fmtErr
+			}
+		}
 	}
 
 	return nil

@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"strconv"
 	"time"
 
 	"github.com/google/uuid"
@@ -270,6 +271,43 @@ func handlerUnfollow(s *state, c command, usr database.User) error {
 	if err := s.db.DeleteFeedFollow(context.Background(), deleteFd); err != nil {
 		fmtErr := fmt.Errorf("Error unfoloowing feed:\n%v", err)
 		return fmtErr
+	}
+
+	return nil
+}
+
+func handlerBrowse(s *state, c command, usr database.User) error {
+	if len(c.args) > 1 {
+		return errors.New("Incorrect number of arguments supplies. Expecting 0 or 1")
+	}
+
+	var limit int32
+	if len(c.args) == 1 {
+		number, err := strconv.Atoi(c.args[0])
+		number32 := int32(number)
+		if err != nil {
+			fmtErr := fmt.Errorf("Error parsing supplied argument:\n%v", err)
+			return fmtErr
+		}
+		limit = number32
+	} else {
+		limit = 2
+	}
+
+	queryParams := database.GetPostsForUserParams{
+		UserID: usr.ID,
+		Limit:  limit,
+	}
+
+	posts, err := s.db.GetPostsForUser(context.Background(), queryParams)
+	if err != nil {
+		fmtErr := fmt.Errorf("Error getting posts for user:\n%v", err)
+		return fmtErr
+	}
+
+	for _, post := range posts {
+		fmt.Printf("Title: %v\n", post.Title.String)
+		fmt.Printf("Description: %v\n\n", post.Description.String)
 	}
 
 	return nil

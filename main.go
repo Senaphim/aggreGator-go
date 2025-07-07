@@ -43,6 +43,7 @@ func main() {
 	cmds.register("follow", loggedIn(handlerFollow))
 	cmds.register("following", loggedIn(handlerFollowing))
 	cmds.register("unfollow", loggedIn(handlerUnfollow))
+	cmds.register("browse", loggedIn(handlerBrowse))
 
 	argSlice := os.Args
 	if len(argSlice) < 2 {

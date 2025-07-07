@@ -6,7 +6,7 @@ CREATE TABLE posts(
   title TEXT,
   url TEXT NOT NULL UNIQUE,
   description TEXT,
-  published_at TIMESTAMP,
+  published_at TEXT,
   feed_id UUID NOT NULL REFERENCES feeds ON DELETE CASCADE,
   CONSTRAINT fk_feeds FOREIGN KEY (feed_id) REFERENCES feeds(id)
 );
